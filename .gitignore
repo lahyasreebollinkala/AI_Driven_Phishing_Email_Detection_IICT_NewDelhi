@@ -65,3 +65,10 @@ images/
 *.swp
 .DS_Store
 Thumbs.db
+
+# Large datasets
+dataset/cleaned_dataset.csv
+dataset/merged_dataset.csv
+
+# Optional: ignore all CSVs in dataset
+# dataset/*.csv
