@@ -1,0 +1,45 @@
+# =============================================================================
+# AI-Driven Phishing Email Detection Using NLP — Docker Compose
+#
+# Spins up two services from the same image:
+#   * ui   — Streamlit web application (port 8501)
+#   * api  — FastAPI REST API (port 8000, interactive docs at /docs)
+#
+# Usage:
+#   docker compose up --build
+# =============================================================================
+
+services:
+  ui:
+    build: .
+    image: ai-phishing-shield:latest
+    container_name: ai-phishing-ui
+    ports:
+      - "8501:8501"
+    environment:
+      - STREAMLIT_PORT=8501
+      - NLTK_DISABLE_IMPORT_SECURITY=1
+      - PYTHONSAFEPATH=1
+    command: >
+      streamlit run app/app.py
+      --server.address 0.0.0.0
+      --server.port 8501
+      --server.headless true
+    restart: unless-stopped
+
+  api:
+    image: ai-phishing-shield:latest
+    container_name: ai-phishing-api
+    depends_on:
+      - ui
+    ports:
+      - "8000:8000"
+    environment:
+      - API_PORT=8000
+      - NLTK_DISABLE_IMPORT_SECURITY=1
+      - PYTHONSAFEPATH=1
+    command: >
+      uvicorn src.api:app
+      --host 0.0.0.0
+      --port 8000
+    restart: unless-stopped

@@ -1,0 +1,19 @@
+# =============================================================================
+# Build context exclusions — keep the image small and local-only
+# =============================================================================
+.git
+.gitignore
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.env
+.env.*
+dataset/raw
+dataset/processed/merged_dataset.csv
+logs
+tests
+Dockerfile
+docker-compose.yml
+README.md
