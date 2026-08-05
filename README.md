@@ -269,6 +269,6 @@ The image bundles the pre-trained artifacts, so it is usable immediately without
 
 - **Project Title:** AI-Driven Phishing Email Detection Using NLP
 - **Institution:** Indian Institute of Computing and Technology (IICT)
-- **Author:** B.Tech Final Year Student Group
-- **Academic Year:** 2025 – 2026
+- **Author:** Lahya Sree Bollinkala
+- **Academic Year:** 2026 – 2027
 - **Objective:** Design a production-grade machine learning application that uses NLP text analytics and structural metadata to detect email threat vectors.
