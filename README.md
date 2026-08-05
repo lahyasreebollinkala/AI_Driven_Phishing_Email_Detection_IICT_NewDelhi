@@ -272,3 +272,20 @@ The image bundles the pre-trained artifacts, so it is usable immediately without
 - **Author:** Lahya Sree Bollinkala
 - **Academic Year:** 2026 – 2027
 - **Objective:** Design a production-grade machine learning application that uses NLP text analytics and structural metadata to detect email threat vectors.
+
+- # 👩‍💻 Author
+
+**Lahya Sree Bollinkala**
+
+B.Tech Computer Science and Engineering
+
+GitHub: https://github.com/lahyasreebollinkala
+
+LinkedIn: https://linkedin.com/in/lahyasreebollinkala
+
+project_URL: [https://aifakenewspredictioniictnewdelhi-mvwgckvhvrymudzsmu5vbr.streamlit.app/](https://aidrivenphishingemaildetectioniictnewdelhi-donszrskpyhwb9g2e4l.streamlit.app/)
+---
+
+# 📄 License
+
+This project is intended for educational and learning purposes.
