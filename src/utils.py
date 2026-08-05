@@ -80,8 +80,11 @@ def setup_logger(name: str = "phishing_detection", level: str | None = None) -> 
     Returns:
         logging.Logger: Configured logger instance.
     """
-    # Ensure log directory exists
-    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    # Ensure log directory exists (best-effort; a read-only FS must not crash)
+    try:
+        os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    except OSError:
+        pass
 
     logger = logging.getLogger(name)
 
@@ -94,11 +97,16 @@ def setup_logger(name: str = "phishing_detection", level: str | None = None) -> 
 
     formatter = logging.Formatter(LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
 
-    # File handler — writes to logs/phishing_detection.log
-    file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
-    file_handler.setLevel(log_level)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+    # File handler — writes to logs/phishing_detection.log (optional).
+    # If the file cannot be opened (permissions, read-only FS), fall back to
+    # console-only logging rather than failing at import/startup time.
+    try:
+        file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+        file_handler.setLevel(log_level)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+    except OSError:
+        pass
 
     # Console handler — prints to stdout
     console_handler = logging.StreamHandler()

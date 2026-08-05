@@ -12,8 +12,11 @@ textColor = "#e2e8f0"
 font = "sans serif"
 
 [server]
-headless = false
-address = "127.0.0.1"
+# NOTE: Do NOT set `address` here. Binding to 127.0.0.1 makes the app
+# unreachable from the Streamlit Cloud proxy/health check (connection
+# refused on /healthz). Leave it unset so Streamlit listens on all
+# interfaces. `headless` and `port` are also managed by Community Cloud.
+headless = true
 port = 8501
 maxUploadSize = 200
 runOnSave = false

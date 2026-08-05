@@ -57,12 +57,22 @@ _NLTK_RESOURCES = {
 
 
 def _ensure_nltk_data() -> None:
-    """Download any missing NLTK resources (no-op when everything exists)."""
+    """Download any missing NLTK resources (no-op when everything exists).
+
+    This is best-effort: a missing resource or a failed/blocked download must
+    never take the application down. Callers degrade gracefully (e.g. fall back
+    to whitespace tokenization / no stopword filtering).
+    """
     for resource_id, package in _NLTK_RESOURCES.items():
         try:
             nltk.data.find(resource_id)
         except LookupError:
-            nltk.download(package, quiet=True)
+            try:
+                nltk.download(package, quiet=True)
+            except Exception:  # noqa: BLE001 — network errors, SSL, proxies
+                pass
+        except Exception:  # noqa: BLE001 — corrupt index files, etc.
+            pass
 
 
 # =============================================================================
@@ -304,10 +314,24 @@ class TextPreprocessor:
     _HTML_TAG_PATTERN = re.compile(r"<[^>]+>")
 
     def __init__(self) -> None:
-        _ensure_nltk_data()
         self.logger = setup_logger("TextPreprocessor")
-        self.stop_words = set(stopwords.words("english"))
-        self.lemmatizer = WordNetLemmatizer()
+        _ensure_nltk_data()
+
+        # NLTK corpus resources are loaded defensively. On a fresh deployment
+        # (e.g. Streamlit Cloud) the data may not be present yet and the
+        # download can be slow or blocked — the pipeline still works without
+        # stopword removal / lemmatization, it is just slightly noisier.
+        try:
+            self.stop_words = set(stopwords.words("english"))
+        except Exception as e:  # noqa: BLE001
+            self.logger.warning("NLTK stopwords unavailable (%s); skipping stopword removal.", e)
+            self.stop_words = set()
+
+        try:
+            self.lemmatizer = WordNetLemmatizer()
+        except Exception as e:  # noqa: BLE001
+            self.logger.warning("NLTK WordNet unavailable (%s); skipping lemmatization.", e)
+            self.lemmatizer = None
 
     # --- Individual Cleaning Steps ---
 
@@ -391,7 +415,17 @@ class TextPreprocessor:
         Returns:
             list[str]: Lemmatized tokens.
         """
-        return [self.lemmatizer.lemmatize(t) for t in tokens]
+        if self.lemmatizer is None:
+            return tokens
+        # WordNet data is loaded lazily by NLTK on first use; if it is missing
+        # (fresh deployment, blocked download) the call raises LookupError.
+        result = []
+        for token in tokens:
+            try:
+                result.append(self.lemmatizer.lemmatize(token))
+            except Exception:  # noqa: BLE001 — corpus data unavailable
+                result.append(token)
+        return result
 
     def normalize_whitespace(self, text: str) -> str:
         """Collapse multiple whitespace characters into a single space."""

@@ -79,13 +79,22 @@ class PhishingDetector:
 
     def __init__(self, model_name: str | None = None) -> None:
         self.logger = setup_logger("PhishingDetector")
-        self.preprocessor = TextPreprocessor()
+        self.preprocessor = None
         self.model = None
         self.vectorizer = None
         self.scaler = None
         self.model_info: dict | None = None
         self.is_loaded = False
         self.model_name = model_name
+
+        # The NLP preprocessor is a hard dependency for prediction. If NLTK
+        # data is unavailable on a fresh deployment it must degrade gracefully
+        # instead of crashing the app at construction time.
+        try:
+            self.preprocessor = TextPreprocessor()
+        except Exception as e:  # noqa: BLE001
+            self.logger.error("Failed to initialize TextPreprocessor: %s", e)
+
         self._load_artifacts(model_name)
 
     # =========================================================================
@@ -135,11 +144,17 @@ class PhishingDetector:
             )
         except FileNotFoundError as e:
             self.logger.error(
-                "Failed to load model artifacts: %s. Run main.py first to train models.", e
+                "Failed to load model artifacts: %s. "
+                "Ensure the trained artifacts exist in %s "
+                "(run main.py to train them). Model path tried: %s",
+                e, MODELS_DIR, model_path,
             )
             self.is_loaded = False
         except Exception as e:  # noqa: BLE001
-            self.logger.error("Unexpected error loading artifacts: %s", e)
+            self.logger.error(
+                "Unexpected error loading artifacts (model=%s, vectorizer=%s, scaler=%s): %s",
+                model_path, TFIDF_VECTORIZER_PATH, METADATA_SCALER_PATH, e,
+            )
             self.is_loaded = False
 
     def _extract_features(self, raw_text: str, cleaned_text: str, subject: str = "") -> csr_matrix:
@@ -381,6 +396,22 @@ class PhishingDetector:
                 "detected_urls": [],
                 "recommendation": "Model not available.",
                 "explanation": "The model artifacts are not loaded.",
+                "model_name": "None",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            }
+
+        if self.preprocessor is None:
+            return {
+                "error": "NLP preprocessor unavailable (NLTK data could not be loaded).",
+                "verdict": "Unknown",
+                "label": -1,
+                "confidence": 0.0,
+                "risk_score": 0,
+                "risk_level": "Unknown",
+                "suspicious_keywords": [],
+                "detected_urls": [],
+                "recommendation": "Prediction not available.",
+                "explanation": "The NLP cleaning pipeline could not be initialised.",
                 "model_name": "None",
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
